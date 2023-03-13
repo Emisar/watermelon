@@ -1,0 +1,2 @@
+ARG ELK_VERSION
+FROM elastic/logstash:${ELK_VERSION}

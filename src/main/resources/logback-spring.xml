@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <property name="LOG_PATTERN" value="%d [%thread] %-5level  %logger{35} - [%mdc] - %msg%n"/>
+    <property name="LOG_AUDIT_PATTERN" value="%msg%n"/>
+    <property name="LOG_ROOT" value="./log"/>
+    <property name="APP_LOG_FOLDER" value="system"/>
+    <property name="AUDIT_LOG_FOLDER" value="audit"/>
+
+    <appender name="consoleAppender" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="filebeatAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_ROOT}/${APP_LOG_FOLDER}/application.log</file>
+        <append>true</append>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_ROOT}/application.%d.%i.log.gz</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="auditbeatAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_ROOT}/${AUDIT_LOG_FOLDER}/audit-application.log</file>
+        <append>true</append>
+<!--        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>-->
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <pattern>
+                    <pattern>
+                        {
+                        "order_number": "%X{Order_Number}",
+                        "bio_number": "%X{Bio_Number}",
+                        "action_type": "%X{Action_Type}",
+                        "object_type": "%X{Object_Type}",
+                        "client": "main_client",
+                        "tags": "audit"
+                        }
+                    </pattern>
+                </pattern>
+                <message/>
+            </providers>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_ROOT}/audit-application.%d.%i.log.gz</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="logstash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
+        <destination>logstash:5043</destination>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <pattern>
+                    <pattern>
+                        {
+                            "order_number": "%X{Order_Number}",
+                            "bio_number": "%X{Bio_Number}",
+                            "action_type": "%X{Action_Type}",
+                            "object_type": "%X{Object_Type}",
+                            "client": "main_client",
+                            "tags": "audit"
+                        }
+                    </pattern>
+                </pattern>
+                <message/>
+            </providers>
+        </encoder>
+    </appender>
+
+    <logger name="anton.example.watermelon" level="INFO" additivity="false">
+        <appender-ref ref="filebeatAppender" />
+        <appender-ref ref="consoleAppender" />
+    </logger>
+
+    <logger name="anton.example.watermelon.audit" level="INFO" additivity="false">
+        <appender-ref ref="auditbeatAppender" />
+        <appender-ref ref="logstash" />
+        <appender-ref ref="consoleAppender" />
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="consoleAppender" />
+    </root>
+</configuration>

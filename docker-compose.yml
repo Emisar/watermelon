@@ -1,0 +1,24 @@
+version: 0.0.1
+services:
+  filebeat:
+    build:
+      context: elastic-beats/filebeat/
+    volumes:
+      - ./log:/usr/share/log
+      - ./elastic-beats/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers/:/var/lib/docker/containers/:ro
+    command: filebeat -e -strict.perms=false
+
+  app:
+    build:
+      context: .
+    volumes:
+      - ./log:/log
+    ports:
+      - 8080:8080
+
+networks:
+  default:
+    external:
+      name: my-net

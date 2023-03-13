@@ -1,0 +1,15 @@
+filebeat.inputs:
+  - type: log
+    paths:
+      - './../log/system/*.log'
+    tags: ["system"]
+  - type: log
+    paths:
+      - './../log/audit/*.log'
+    tags: ["audit"]
+
+
+
+output.logstash:
+    hosts: ["logstash:5044"]
+    index:
